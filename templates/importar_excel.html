@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Importar Excel</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Importar Embarques</h2>
+
+<form
+method="POST"
+enctype="multipart/form-data">
+
+<input
+type="file"
+name="arquivo"
+accept=".xlsx"
+required>
+
+<br><br>
+
+<button
+type="submit"
+class="btn">
+
+📥 Importar Excel
+
+</button>
+
+</form>
+
+<br>
+
+<a
+href="/todos_embarques"
+class="btn">
+
+⬅ Voltar
+
+</a>
+
+</div>
+
+</div>
+
+</body>
+
+</html>
