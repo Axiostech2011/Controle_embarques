@@ -61,16 +61,17 @@ function pesquisarTabela(){
 
 <div class="titulo">
 
-    <img
-        src="{{ url_for('static', filename='logo.png') }}"
-        alt="Axios"
-        class="logo-header">
+<img
+src="{{ url_for('static', filename='logo.png') }}"
+alt="Axios"
+class="logo-header">
 
-    <div>
-        CONTROLE DE EMBARQUES
-    </div>
+<div>
+CONTROLE DE EMBARQUES
+</div>
 
 </div>
+
 <div class="data">
 <span id="data"></span>
 </div>
@@ -78,8 +79,7 @@ function pesquisarTabela(){
 </header>
 
 <div class="container">
-
-<div class="cards">
+    <div class="cards">
 
 <div class="info-card">
 <h3>Embarques Ativos</h3>
@@ -122,9 +122,18 @@ Novo Embarque
 <a href="/historico" class="btn">
 Histórico
 </a>
-    <a href="/backup" class="btn">
+
+{% if perfil == "admin" %}
+
+<a href="/backup" class="btn">
 💾 Backup
 </a>
+
+<a href="/exportar_excel" class="btn">
+📊 Exportar Excel
+</a>
+
+{% endif %}
 
 <a href="/logout" class="btn">
 Sair
@@ -155,7 +164,6 @@ Sair
 
 {% if perfil == "admin" %}
 <th>Editar</th>
-    
 {% endif %}
 
 </tr>
@@ -163,8 +171,7 @@ Sair
 </thead>
 
 <tbody>
-
-{% for embarque in embarques %}
+    {% for embarque in embarques %}
 
 <tr>
 
@@ -179,6 +186,7 @@ Sair
 <td>{{ embarque["navio"] }}</td>
 
 <td>{{ embarque["ref"] }}</td>
+
 <td>{{ embarque["fatura"] }}</td>
 
 <td>{{ embarque["porto"] }}</td>
@@ -187,43 +195,28 @@ Sair
 
 <td>
 
+{% if perfil == "admin" %}
 
-
-<form
-method="POST"
+<form method="POST"
 action="/alterar_status/{{ embarque['id'] }}">
 
 <select
 name="status"
 onchange="this.form.submit()">
 
-<option {% if embarque["status"]=="Previsão Saída" %}selected{% endif %}>
-Previsão Saída
-</option>
+<option {% if embarque["status"]=="Previsão Saída" %}selected{% endif %}>Previsão Saída</option>
 
-<option {% if embarque["status"]=="Draft Recibo" %}selected{% endif %}>
-Draft Recibo
-</option>
+<option {% if embarque["status"]=="Draft Recibo" %}selected{% endif %}>Draft Recibo</option>
 
-<option {% if embarque["status"]=="Embarque Confirmado" %}selected{% endif %}>
-Embarque Confirmado
-</option>
+<option {% if embarque["status"]=="Embarque Confirmado" %}selected{% endif %}>Embarque Confirmado</option>
 
-<option {% if embarque["status"]=="Previsão de Chegada" %}selected{% endif %}>
-Previsão de Chegada
-</option>
+<option {% if embarque["status"]=="Previsão de Chegada" %}selected{% endif %}>Previsão de Chegada</option>
 
-<option {% if embarque["status"]=="Chegada Confirmada" %}selected{% endif %}>
-Chegada Confirmada
-</option>
+<option {% if embarque["status"]=="Chegada Confirmada" %}selected{% endif %}>Chegada Confirmada</option>
 
-<option {% if embarque["status"]=="Atracação Confirmada" %}selected{% endif %}>
-Atracação Confirmada
-</option>
+<option {% if embarque["status"]=="Atracação Confirmada" %}selected{% endif %}>Atracação Confirmada</option>
 
-<option {% if embarque["status"]=="Finalizado" %}selected{% endif %}>
-Finalizado
-</option>
+<option {% if embarque["status"]=="Finalizado" %}selected{% endif %}>Finalizado</option>
 
 </select>
 
@@ -254,8 +247,7 @@ href="/editar/{{ embarque['id'] }}">
 </tr>
 
 {% endfor %}
-
-</tbody>
+    </tbody>
 
 </table>
 
@@ -268,41 +260,7 @@ href="/editar/{{ embarque['id'] }}">
 <h3>Ferramentas Úteis</h3>
 
 <div class="menu">
-<div class="menu">
 
-{% if perfil == "admin" %}
-
-<a href="/" class="btn">
-Novo Embarque
-</a>
-
-{% endif %}
-
-<a href="/historico" class="btn">
-Histórico
-</a>
-
-{% if perfil == "admin" %}
-
-<a href="/backup" class="btn">
-💾 Backup
-</a>
-
-<a href="/exportar_excel" class="btn">
-📊 Exportar Excel
-</a>
-
-<a href="/importar_excel" class="btn">
-📥 Importar Excel
-</a>
-
-{% endif %}
-
-<a href="/logout" class="btn">
-Sair
-</a>
-
-</div>
 <a
 href="https://www.portoitapoa.com/programacao-de-navios/"
 target="_blank"
