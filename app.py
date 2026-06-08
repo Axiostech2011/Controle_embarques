@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from functools import wraps
 import sqlite3
 from datetime import datetime
-
+from flask import send_file
 app = Flask(__name__)
 app.secret_key = "AxiosSecret2026"
 
@@ -501,7 +501,20 @@ def editar(id):
         usuario=session.get("usuario")
     )
 
+# =====================================
+# BACKUP BANCO
+# =====================================
 
+@app.route("/backup")
+@login_required
+@admin_required
+def backup():
+
+    return send_file(
+        "embarques.db",
+        as_attachment=True,
+        download_name="backup_embarques.db"
+    )
 # =====================================
 # EXECUTAR
 # =====================================
