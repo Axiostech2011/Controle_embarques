@@ -1,13 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from functools import wraps
-import sqlite3
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from openpyxl import Workbook, load_workbook
 
 
 app = Flask(__name__)
 app.secret_key = "AxiosSecret2026"
-
+def get_db():
+    return psycopg2.connect(
+        os.environ["DATABASE_URL"],
+        cursor_factory=RealDictCursor
+    )
 # =====================================
 # USUÁRIOS
 # =====================================
@@ -28,39 +34,42 @@ USUARIOS_CONSULTA = {
 
 def init_db():
 
-    with sqlite3.connect("embarques.db") as conn:
+    conn = get_db()
 
-        cursor = conn.cursor()
+    cursor = conn.cursor()
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS embarques (
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS embarques (
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id BIGSERIAL PRIMARY KEY,
 
-            etd TEXT NOT NULL,
-            eta TEXT NOT NULL,
+        etd TEXT NOT NULL,
+        eta TEXT NOT NULL,
 
-            exportador TEXT NOT NULL,
-            produto TEXT NOT NULL,
+        exportador TEXT NOT NULL,
+        produto TEXT NOT NULL,
 
-            navio TEXT NOT NULL,
-            cia_maritima TEXT NOT NULL,
+        navio TEXT NOT NULL,
+        cia_maritima TEXT NOT NULL,
 
-            ref TEXT NOT NULL,
-            fatura TEXT NOT NULL,
+        ref TEXT NOT NULL,
+        fatura TEXT NOT NULL,
 
-            porto TEXT NOT NULL,
+        porto TEXT NOT NULL,
 
-            container INTEGER NOT NULL,
+        container INTEGER NOT NULL,
 
-            status TEXT NOT NULL,
+        status TEXT NOT NULL,
 
-            data_finalizacao TEXT
+        data_finalizacao TEXT
 
-        )
-        """)
+    )
+    """)
 
-        conn.commit()
+    conn.commit()
+
+    cursor.close()
+    conn.close()
 
 init_db()
 
@@ -215,43 +224,46 @@ def adicionar():
 
         data_finalizacao = datetime.now().strftime("%d/%m/%Y")
 
-    with sqlite3.connect("embarques.db") as conn:
+  conn = get_db()
 
-        cursor = conn.cursor()
+cursor = conn.cursor()
 
-        cursor.execute("""
-        INSERT INTO embarques (
-            etd,
-            eta,
-            exportador,
-            produto,
-            navio,
-            cia_maritima,
-            ref,
-            fatura,
-            porto,
-            container,
-            status,
-            data_finalizacao
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            etd,
-            eta,
-            exportador,
-            produto,
-            navio,
-            cia_maritima,
-            ref,
-            fatura,
-            porto,
-            container,
-            status,
-            data_finalizacao
-        ))
+cursor.execute("""
+INSERT INTO embarques (
+    etd,
+    eta,
+    exportador,
+    produto,
+    navio,
+    cia_maritima,
+    ref,
+    fatura,
+    porto,
+    container,
+    status,
+    data_finalizacao
+)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+""",
+(
+    etd,
+    eta,
+    exportador,
+    produto,
+    navio,
+    cia_maritima,
+    ref,
+    fatura,
+    porto,
+    container,
+    status,
+    data_finalizacao
+))
 
-        conn.commit()
+conn.commit()
+
+cursor.close()
+conn.close()
 
     flash("Embarque cadastrado com sucesso!")
 
@@ -264,20 +276,21 @@ def adicionar():
 @login_required
 def todos_embarques():
 
-    with sqlite3.connect("embarques.db") as conn:
+    conn = get_db()
 
-        conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
 
-        cursor = conn.cursor()
+    cursor.execute("""
+    SELECT *
+    FROM embarques
+    WHERE status <> 'Finalizado'
+    ORDER BY eta ASC
+    """)
 
-        cursor.execute("""
-        SELECT *
-        FROM embarques
-        WHERE status <> 'Finalizado'
-        ORDER BY eta ASC
-        """)
+    dados = cursor.fetchall()
 
-        dados = cursor.fetchall()
+    cursor.close()
+    conn.close()
 
     embarques = []
 
@@ -321,69 +334,8 @@ def todos_embarques():
 
 
 # =====================================
-# HISTÓRICO
-# =====================================
-
-@app.route("/historico")
-@login_required
-def historico():
-
-    with sqlite3.connect("embarques.db") as conn:
-
-        conn.row_factory = sqlite3.Row
-
-        cursor = conn.cursor()
-
-        cursor.execute("""
-        SELECT *
-        FROM embarques
-        WHERE status = 'Finalizado'
-        ORDER BY id DESC
-        """)
-
-        dados = cursor.fetchall()
-
-    embarques = []
-
-    for e in dados:
-
-        embarques.append({
-
-            "id": e["id"],
-
-            "etd": formatar_data(e["etd"]),
-            "eta": formatar_data(e["eta"]),
-
-            "exportador": e["exportador"],
-            "produto": e["produto"],
-
-            "navio": e["navio"],
-
-            "ref": e["ref"],
-            "fatura": e["fatura"],
-
-            "porto": e["porto"],
-
-            "container": e["container"],
-
-            "status": e["status"],
-
-            "data_finalizacao": e["data_finalizacao"]
-
-        })
-
-    return render_template(
-        "historico.html",
-        embarques=embarques,
-        perfil=session.get("perfil"),
-        usuario=session.get("usuario")
-    )
-
-
-# =====================================
 # ALTERAR STATUS
 # =====================================
-
 @app.route("/alterar_status/<int:id>", methods=["POST"])
 @login_required
 @admin_required
@@ -397,30 +349,32 @@ def alterar_status(id):
 
         data_finalizacao = datetime.now().strftime("%d/%m/%Y")
 
-    with sqlite3.connect("embarques.db") as conn:
+    conn = get_db()
 
-        cursor = conn.cursor()
+    cursor = conn.cursor()
 
-        cursor.execute("""
-        UPDATE embarques
-        SET
-            status=?,
-            data_finalizacao=?
-        WHERE id=?
-        """,
-        (
-            novo_status,
-            data_finalizacao,
-            id
-        ))
+    cursor.execute("""
+    UPDATE embarques
+    SET
+        status=%s,
+        data_finalizacao=%s
+    WHERE id=%s
+    """,
+    (
+        novo_status,
+        data_finalizacao,
+        id
+    ))
 
-        conn.commit()
+    conn.commit()
+
+    cursor.close()
+    conn.close()
 
     return redirect(url_for("todos_embarques"))
 # =====================================
 # EDITAR EMBARQUE
 # =====================================
-
 @app.route("/editar/<int:id>", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -444,57 +398,61 @@ def editar(id):
 
         container = int(request.form["container"])
 
-        with sqlite3.connect("embarques.db") as conn:
+        conn = get_db()
 
-            cursor = conn.cursor()
+        cursor = conn.cursor()
 
-            cursor.execute("""
-            UPDATE embarques
-            SET
-                etd=?,
-                eta=?,
-                exportador=?,
-                produto=?,
-                navio=?,
-                cia_maritima=?,
-                ref=?,
-                fatura=?,
-                porto=?,
-                container=?
-            WHERE id=?
-            """,
-            (
-                etd,
-                eta,
-                exportador,
-                produto,
-                navio,
-                cia_maritima,
-                ref,
-                fatura,
-                porto,
-                container,
-                id
-            ))
+        cursor.execute("""
+        UPDATE embarques
+        SET
+            etd=%s,
+            eta=%s,
+            exportador=%s,
+            produto=%s,
+            navio=%s,
+            cia_maritima=%s,
+            ref=%s,
+            fatura=%s,
+            porto=%s,
+            container=%s
+        WHERE id=%s
+        """,
+        (
+            etd,
+            eta,
+            exportador,
+            produto,
+            navio,
+            cia_maritima,
+            ref,
+            fatura,
+            porto,
+            container,
+            id
+        ))
 
-            conn.commit()
+        conn.commit()
+
+        cursor.close()
+        conn.close()
 
         flash("Embarque atualizado com sucesso!")
 
         return redirect(url_for("todos_embarques"))
 
-    with sqlite3.connect("embarques.db") as conn:
+    conn = get_db()
 
-        conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
 
-        cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM embarques WHERE id=%s",
+        (id,)
+    )
 
-        cursor.execute(
-            "SELECT * FROM embarques WHERE id=?",
-            (id,)
-        )
+    embarque = cursor.fetchone()
 
-        embarque = cursor.fetchone()
+    cursor.close()
+    conn.close()
 
     return render_template(
         "editar.html",
