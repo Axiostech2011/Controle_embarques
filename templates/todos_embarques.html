@@ -155,14 +155,14 @@ Sair
 
 <th>ETD</th>
 <th>ETA</th>
-<th>Exportador</th>
-<th>Produto</th>
-<th>Navio</th>
-<th>REF</th>
-<th>Fatura</th>
-<th>Porto</th>
-<th>Cont.</th>
-<th>Status</th>
+<th>NAVIO</th>
+<th>REFERÊNCIA</th>
+<th>EXPORTADOR</th>
+<th>FATURA</th>
+<th>PRODUTO</th>
+<th>PORTO</th>
+<th>CONTAINER</th>
+<th>STATUS</th>
 
 {% if perfil == "admin" %}
 <th>Editar</th>
@@ -178,23 +178,14 @@ Sair
 <tr>
 
 <td>{{ embarque["etd"] }}</td>
-
 <td>{{ embarque["eta"] }}</td>
-
-<td>{{ embarque["exportador"] }}</td>
-
-<td>{{ embarque["produto"] }}</td>
-
 <td>{{ embarque["navio"] }}</td>
-
 <td>{{ embarque["ref"] }}</td>
-
+<td>{{ embarque["exportador"] }}</td>
 <td>{{ embarque["fatura"] }}</td>
-
+<td>{{ embarque["produto"] }}</td>
 <td>{{ embarque["porto"] }}</td>
-
 <td>{{ embarque["container"] }}</td>
-
 <td>
 
 {% if perfil == "admin" %}
@@ -208,7 +199,7 @@ onchange="this.form.submit()">
 
 <option {% if embarque["status"]=="Previsão Saída" %}selected{% endif %}>Previsão Saída</option>
 
-<option {% if embarque["status"]=="Draft Recibo" %}selected{% endif %}>Draft Recibo</option>
+<option {% if embarque["status"]=="Draft Recebido" %}selected{% endif %}>Draft Recibo</option>
 
 <option {% if embarque["status"]=="Embarque Confirmado" %}selected{% endif %}>Embarque Confirmado</option>
 
