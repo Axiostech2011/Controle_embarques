@@ -3,6 +3,10 @@ from functools import wraps
 import sqlite3
 from datetime import datetime
 from flask import send_file
+from flask import send_file
+from openpyxl import Workbook
+
+
 app = Flask(__name__)
 app.secret_key = "AxiosSecret2026"
 
@@ -514,6 +518,69 @@ def backup():
         "embarques.db",
         as_attachment=True,
         download_name="backup_embarques.db"
+    )
+
+# =====================================
+# EXPORTAR EXCEL
+# =====================================
+
+@app.route("/exportar_excel")
+@login_required
+@admin_required
+def exportar_excel():
+
+    wb = Workbook()
+    ws = wb.active
+
+    ws.title = "Embarques"
+
+    ws.append([
+        "ETD",
+        "ETA",
+        "EXPORTADOR",
+        "PRODUTO",
+        "NAVIO",
+        "CIA MARITIMA",
+        "REF",
+        "FATURA",
+        "PORTO",
+        "CONTAINERS",
+        "STATUS"
+    ])
+
+    with sqlite3.connect("embarques.db") as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT
+            etd,
+            eta,
+            exportador,
+            produto,
+            navio,
+            cia_maritima,
+            ref,
+            fatura,
+            porto,
+            container,
+            status
+        FROM embarques
+        ORDER BY eta
+        """)
+
+        dados = cursor.fetchall()
+
+        for linha in dados:
+            ws.append(linha)
+
+    arquivo = "embarques.xlsx"
+
+    wb.save(arquivo)
+
+    return send_file(
+        arquivo,
+        as_attachment=True
     )
 # =====================================
 # EXECUTAR
