@@ -155,6 +155,7 @@ Sair
 
 {% if perfil == "admin" %}
 <th>Editar</th>
+    
 {% endif %}
 
 </tr>
@@ -186,21 +187,7 @@ Sair
 
 <td>
 
-{% if perfil == "admin" %}
 
-<a href="/backup" class="btn">
-💾 Backup Banco
-</a>
-
-<a href="/exportar_excel" class="btn">
-📊 Exportar Excel
-</a>
-
-<a href="/importar_excel" class="btn">
-📥 Importar Excel
-</a>
-
-{% endif %}
 
 <form
 method="POST"
@@ -281,7 +268,41 @@ href="/editar/{{ embarque['id'] }}">
 <h3>Ferramentas Úteis</h3>
 
 <div class="menu">
+<div class="menu">
 
+{% if perfil == "admin" %}
+
+<a href="/" class="btn">
+Novo Embarque
+</a>
+
+{% endif %}
+
+<a href="/historico" class="btn">
+Histórico
+</a>
+
+{% if perfil == "admin" %}
+
+<a href="/backup" class="btn">
+💾 Backup
+</a>
+
+<a href="/exportar_excel" class="btn">
+📊 Exportar Excel
+</a>
+
+<a href="/importar_excel" class="btn">
+📥 Importar Excel
+</a>
+
+{% endif %}
+
+<a href="/logout" class="btn">
+Sair
+</a>
+
+</div>
 <a
 href="https://www.portoitapoa.com/programacao-de-navios/"
 target="_blank"
