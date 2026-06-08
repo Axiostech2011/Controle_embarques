@@ -580,6 +580,68 @@ def exportar_excel():
         arquivo,
         as_attachment=True
     )
+    # =====================================
+# IMPORTAR EXCEL
+# =====================================
+
+@app.route("/importar_excel", methods=["GET", "POST"])
+@login_required
+@admin_required
+def importar_excel():
+
+    if request.method == "POST":
+
+        arquivo = request.files["arquivo"]
+
+        wb = load_workbook(arquivo)
+
+        ws = wb.active
+
+        with sqlite3.connect("embarques.db") as conn:
+
+            cursor = conn.cursor()
+
+            for linha in ws.iter_rows(min_row=2, values_only=True):
+
+                cursor.execute("""
+                INSERT INTO embarques (
+                    etd,
+                    eta,
+                    exportador,
+                    produto,
+                    navio,
+                    cia_maritima,
+                    ref,
+                    fatura,
+                    porto,
+                    container,
+                    status,
+                    data_finalizacao
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    linha[0],
+                    linha[1],
+                    linha[2],
+                    linha[3],
+                    linha[4],
+                    linha[5],
+                    linha[6],
+                    linha[7],
+                    linha[8],
+                    linha[9],
+                    linha[10],
+                    None
+                ))
+
+            conn.commit()
+
+        flash("Excel importado com sucesso!")
+
+        return redirect(url_for("todos_embarques"))
+
+    return render_template("importar_excel.html")
 # =====================================
 # EXECUTAR
 # =====================================
