@@ -1,10 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from functools import wraps
 import sqlite3
 from datetime import datetime
-from flask import send_file
-from flask import send_file
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 
 
 app = Flask(__name__)
