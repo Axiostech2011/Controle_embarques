@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Embarques Ativos</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+
+<script>
+
+function atualizarDataHora(){
+
+    const agora = new Date();
+
+    document.getElementById("hora").innerHTML =
+        agora.toLocaleTimeString('pt-BR');
+
+    document.getElementById("data").innerHTML =
+        agora.toLocaleDateString('pt-BR');
+
+}
+
+setInterval(atualizarDataHora,1000);
+
+function pesquisarTabela(){
+
+    let filtro =
+    document.getElementById("pesquisa").value.toUpperCase();
+
+    let linhas =
+    document.querySelectorAll("#tabela tbody tr");
+
+    linhas.forEach(function(linha){
+
+        let texto =
+        linha.innerText.toUpperCase();
+
+        linha.style.display =
+        texto.includes(filtro) ? "" : "none";
+
+    });
+
+}
+
+</script>
+
+</head>
+
+<body onload="atualizarDataHora()">
+
+<header>
+
+<div class="hora">
+<span id="hora"></span>
+</div>
+
+<div class="titulo">
+
+    <img
+        src="{{ url_for('static', filename='logo.png') }}"
+        alt="Axios"
+        class="logo-header">
+
+    <div>
+        CONTROLE DE EMBARQUES
+    </div>
+
+</div>
+<div class="data">
+<span id="data"></span>
+</div>
+
+</header>
+
+<div class="container">
+
+<div class="cards">
+
+<div class="info-card">
+<h3>Embarques Ativos</h3>
+<p>{{ embarques|length }}</p>
+</div>
+
+<div class="info-card">
+<h3>Containers</h3>
+<p>{{ total_containers }}</p>
+</div>
+
+<div class="info-card">
+<h3>Usuário</h3>
+<p style="font-size:18px;">
+{{ usuario }}
+</p>
+</div>
+
+</div>
+
+<div class="card">
+
+<input
+type="text"
+id="pesquisa"
+class="pesquisa"
+placeholder="Pesquisar embarques..."
+onkeyup="pesquisarTabela()">
+
+<div class="menu">
+
+{% if perfil == "admin" %}
+
+<a href="/" class="btn">
+Novo Embarque
+</a>
+
+{% endif %}
+
+<a href="/historico" class="btn">
+Histórico
+</a>
+
+<a href="/logout" class="btn">
+Sair
+</a>
+
+</div>
+
+<br>
+
+<div class="tabela">
+
+<table id="tabela">
+
+<thead>
+
+<tr>
+
+<th>ETD</th>
+<th>ETA</th>
+<th>Exportador</th>
+<th>Produto</th>
+<th>Navio</th>
+<th>REF</th>
+<th>Porto</th>
+<th>Cont.</th>
+<th>Status</th>
+
+{% if perfil == "admin" %}
+<th>Editar</th>
+{% endif %}
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for embarque in embarques %}
+
+<tr>
+
+<td>{{ embarque["etd"] }}</td>
+
+<td>{{ embarque["eta"] }}</td>
+
+<td>{{ embarque["exportador"] }}</td>
+
+<td>{{ embarque["produto"] }}</td>
+
+<td>{{ embarque["navio"] }}</td>
+
+<td>{{ embarque["ref"] }}</td>
+
+<td>{{ embarque["porto"] }}</td>
+
+<td>{{ embarque["container"] }}</td>
+
+<td>
+
+{% if perfil == "admin" %}
+
+<form
+method="POST"
+action="/alterar_status/{{ embarque['id'] }}">
+
+<select
+name="status"
+onchange="this.form.submit()">
+
+<option {% if embarque["status"]=="Previsão Saída" %}selected{% endif %}>
+Previsão Saída
+</option>
+
+<option {% if embarque["status"]=="Draft Recibo" %}selected{% endif %}>
+Draft Recibo
+</option>
+
+<option {% if embarque["status"]=="Embarque Confirmado" %}selected{% endif %}>
+Embarque Confirmado
+</option>
+
+<option {% if embarque["status"]=="Previsão de Chegada" %}selected{% endif %}>
+Previsão de Chegada
+</option>
+
+<option {% if embarque["status"]=="Chegada Confirmada" %}selected{% endif %}>
+Chegada Confirmada
+</option>
+
+<option {% if embarque["status"]=="Atracação Confirmada" %}selected{% endif %}>
+Atracação Confirmada
+</option>
+
+<option {% if embarque["status"]=="Finalizado" %}selected{% endif %}>
+Finalizado
+</option>
+
+</select>
+
+</form>
+
+{% else %}
+
+{{ embarque["status"] }}
+
+{% endif %}
+
+</td>
+
+{% if perfil == "admin" %}
+
+<td>
+
+<a
+class="editar"
+href="/editar/{{ embarque['id'] }}">
+✏️
+</a>
+
+</td>
+
+{% endif %}
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="card ferramentas">
+
+<h3>Ferramentas Úteis</h3>
+
+<div class="menu">
+
+<a
+href="https://www.portoitapoa.com/programacao-de-navios/"
+target="_blank"
+class="btn">
+🌊 Porto Itapoá
+</a>
+
+<a
+href="https://extranet.portonave.com.br/line-up/"
+target="_blank"
+class="btn">
+🌊 Porto Navegantes
+</a>
+
+<a
+href="https://www.marinetraffic.com"
+target="_blank"
+class="btn">
+🚢 MarineTraffic
+</a>
+
+<a
+href="https://www.mercante.transportes.gov.br/g36127/servlet/serpro.siscomex.mercante.servlet.MercanteController"
+target="_blank"
+class="btn">
+📦 Marinha Mercante
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</body>
+
+</html>

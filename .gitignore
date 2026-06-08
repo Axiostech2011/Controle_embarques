@@ -1,0 +1,5 @@
+embarques.db
+Backups/
+
+__pycache__/
+*.pyc

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Histórico de Embarques</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+
+<script>
+
+function atualizarDataHora(){
+
+    const agora = new Date();
+
+    document.getElementById("hora").innerHTML =
+        agora.toLocaleTimeString('pt-BR');
+
+    document.getElementById("data").innerHTML =
+        agora.toLocaleDateString('pt-BR');
+
+}
+
+setInterval(atualizarDataHora,1000);
+
+function pesquisarTabela(){
+
+    let filtro =
+    document.getElementById("pesquisa").value.toUpperCase();
+
+    let linhas =
+    document.querySelectorAll("#tabela tbody tr");
+
+    linhas.forEach(function(linha){
+
+        let texto =
+        linha.innerText.toUpperCase();
+
+        linha.style.display =
+        texto.includes(filtro) ? "" : "none";
+
+    });
+
+}
+
+</script>
+
+</head>
+
+<body onload="atualizarDataHora()">
+
+<header>
+
+<div class="hora">
+<span id="hora"></span>
+</div>
+
+<div class="titulo">
+HISTÓRICO DE EMBARQUES
+</div>
+
+<div class="data">
+<span id="data"></span>
+</div>
+
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<input
+type="text"
+id="pesquisa"
+class="pesquisa"
+placeholder="Pesquisar histórico..."
+onkeyup="pesquisarTabela()">
+
+<div class="menu">
+
+<a href="/todos_embarques" class="btn">
+Embarques Ativos
+</a>
+
+{% if perfil == "admin" %}
+
+<a href="/" class="btn">
+Novo Embarque
+</a>
+
+{% endif %}
+
+<a href="/logout" class="btn">
+Sair
+</a>
+
+</div>
+
+<br>
+
+<div class="tabela">
+
+<table id="tabela">
+
+<thead>
+
+<tr>
+
+<th>Finalizado</th>
+<th>ETD</th>
+<th>ETA</th>
+<th>Exportador</th>
+<th>Produto</th>
+<th>Navio</th>
+<th>REF</th>
+<th>Porto</th>
+<th>Containers</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for embarque in embarques %}
+
+<tr>
+
+<td>{{ embarque["data_finalizacao"] }}</td>
+
+<td>{{ embarque["etd"] }}</td>
+
+<td>{{ embarque["eta"] }}</td>
+
+<td>{{ embarque["exportador"] }}</td>
+
+<td>{{ embarque["produto"] }}</td>
+
+<td>{{ embarque["navio"] }}</td>
+
+<td>{{ embarque["ref"] }}</td>
+
+<td>{{ embarque["porto"] }}</td>
+
+<td>{{ embarque["container"] }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="card ferramentas">
+
+<h3>Ferramentas Úteis</h3>
+
+<div class="menu">
+
+<a
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</body>
+
+</html>
