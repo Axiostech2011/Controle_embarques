@@ -188,6 +188,20 @@ Sair
 
 {% if perfil == "admin" %}
 
+<a href="/backup" class="btn">
+💾 Backup Banco
+</a>
+
+<a href="/exportar_excel" class="btn">
+📊 Exportar Excel
+</a>
+
+<a href="/importar_excel" class="btn">
+📥 Importar Excel
+</a>
+
+{% endif %}
+
 <form
 method="POST"
 action="/alterar_status/{{ embarque['id'] }}">
