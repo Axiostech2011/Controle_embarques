@@ -1,207 +1,177 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from functools import wraps
-import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import sqlite3
 from datetime import datetime
 from openpyxl import Workbook, load_workbook
+
 
 app = Flask(__name__)
 app.secret_key = "AxiosSecret2026"
 
-def get_db():
-return psycopg2.connect(
-os.environ["DATABASE_URL"],
-cursor_factory=RealDictCursor
-)
-
-
 # =====================================
-
 # USUÁRIOS
-
 # =====================================
 
 ADMIN_USUARIO = "Axios"
 ADMIN_SENHA = "AxiosSecret"
 
 USUARIOS_CONSULTA = {
-"Whiteplas": "Axios2011",
-"cliente2": "cliente123",
-"cliente3": "cliente123",
-"cliente4": "cliente123"
+    "Whiteplas": "Axios2011",
+    "cliente2": "cliente123",
+    "cliente3": "cliente123",
+    "cliente4": "cliente123"
 }
 
 # =====================================
-
 # BANCO DE DADOS
-
 # =====================================
 
 def init_db():
 
- 
-conn = get_db()
-cursor = conn.cursor()
+    with sqlite3.connect("embarques.db") as conn:
 
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS embarques (
+        cursor = conn.cursor()
 
-    id BIGSERIAL PRIMARY KEY,
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS embarques (
 
-    etd TEXT NOT NULL,
-    eta TEXT NOT NULL,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    exportador TEXT NOT NULL,
-    produto TEXT NOT NULL,
+            etd TEXT NOT NULL,
+            eta TEXT NOT NULL,
 
-    navio TEXT NOT NULL,
-    cia_maritima TEXT NOT NULL,
+            exportador TEXT NOT NULL,
+            produto TEXT NOT NULL,
 
-    ref TEXT NOT NULL,
-    fatura TEXT NOT NULL,
+            navio TEXT NOT NULL,
+            cia_maritima TEXT NOT NULL,
 
-    porto TEXT NOT NULL,
+            ref TEXT NOT NULL,
+            fatura TEXT NOT NULL,
 
-    container INTEGER NOT NULL,
+            porto TEXT NOT NULL,
 
-    status TEXT NOT NULL,
+            container INTEGER NOT NULL,
 
-    data_finalizacao TEXT
-)
-""")
+            status TEXT NOT NULL,
 
-conn.commit()
+            data_finalizacao TEXT
 
-cursor.close()
-conn.close()
- 
+        )
+        """)
+
+        conn.commit()
 
 init_db()
+
 # =====================================
-
 # LOGIN OBRIGATÓRIO
-
 # =====================================
 
 def login_required(f):
 
- 
-@wraps(f)
-def decorated_function(*args, **kwargs):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
 
-    if not session.get("logado"):
-        return redirect(url_for("login"))
+        if not session.get("logado"):
+            return redirect(url_for("login"))
 
-    return f(*args, **kwargs)
+        return f(*args, **kwargs)
 
-return decorated_function
- 
+    return decorated_function
 
 # =====================================
-
 # SOMENTE ADMIN
-
 # =====================================
 
 def admin_required(f):
 
- 
-@wraps(f)
-def decorated_function(*args, **kwargs):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
 
-    if session.get("perfil") != "admin":
+        if session.get("perfil") != "admin":
 
-        flash("Acesso restrito.")
+            flash("Acesso restrito.")
 
-        return redirect(url_for("todos_embarques"))
+            return redirect(url_for("todos_embarques"))
 
-    return f(*args, **kwargs)
+        return f(*args, **kwargs)
 
-return decorated_function
- 
+    return decorated_function
 
 # =====================================
-
 # FORMATAR DATA
-
 # =====================================
 
 def formatar_data(data):
 
- 
-try:
+    try:
 
-    return datetime.strptime(
-        data,
-        "%Y-%m-%d"
-    ).strftime("%d/%m/%Y")
+        return datetime.strptime(
+            data,
+            "%Y-%m-%d"
+        ).strftime("%d/%m/%Y")
 
-except:
+    except:
 
-    return data
- 
-
-# =====================================
-
+        return data
+    # =====================================
 # LOGIN
-
 # =====================================
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
- 
-if request.method == "POST":
+    if request.method == "POST":
 
-    usuario = request.form["usuario"]
-    senha = request.form["senha"]
+        usuario = request.form["usuario"]
+        senha = request.form["senha"]
 
-    if (
-        usuario == ADMIN_USUARIO and
-        senha == ADMIN_SENHA
-    ):
+        # ADMIN
 
-        session["logado"] = True
-        session["perfil"] = "admin"
-        session["usuario"] = usuario
+        if (
+            usuario == ADMIN_USUARIO and
+            senha == ADMIN_SENHA
+        ):
 
-        return redirect(url_for("todos_embarques"))
+            session["logado"] = True
+            session["perfil"] = "admin"
+            session["usuario"] = usuario
 
-    elif (
-        usuario in USUARIOS_CONSULTA and
-        senha == USUARIOS_CONSULTA[usuario]
-    ):
+            return redirect(url_for("todos_embarques"))
 
-        session["logado"] = True
-        session["perfil"] = "consulta"
-        session["usuario"] = usuario
+        # CLIENTES
 
-        return redirect(url_for("todos_embarques"))
+        elif (
+            usuario in USUARIOS_CONSULTA and
+            senha == USUARIOS_CONSULTA[usuario]
+        ):
 
-    flash("Usuário ou senha inválidos")
+            session["logado"] = True
+            session["perfil"] = "consulta"
+            session["usuario"] = usuario
 
-return render_template("login.html")
- 
+            return redirect(url_for("todos_embarques"))
+
+        flash("Usuário ou senha inválidos")
+
+    return render_template("login.html")
+
 
 # =====================================
-
 # LOGOUT
-
 # =====================================
 
 @app.route("/logout")
 def logout():
 
- 
-session.clear()
+    session.clear()
 
-return redirect(url_for("login"))
- 
+    return redirect(url_for("login"))
+
+
 # =====================================
-
 # PÁGINA INICIAL
-
 # =====================================
 
 @app.route("/")
@@ -209,274 +179,17 @@ return redirect(url_for("login"))
 @admin_required
 def index():
 
- 
-return render_template("index.html")
- 
+    return render_template("index.html")
+
 
 # =====================================
-
 # ADICIONAR EMBARQUE
-
 # =====================================
 
 @app.route("/adicionar", methods=["POST"])
 @login_required
 @admin_required
 def adicionar():
-
- 
-etd = request.form["etd"]
-eta = request.form["eta"]
-
-exportador = request.form["exportador"].upper()
-produto = request.form["produto"].upper()
-
-navio = request.form["navio"].upper()
-cia_maritima = request.form["cia_maritima"].upper()
-
-ref = request.form["ref"].upper()
-fatura = request.form["fatura"].upper()
-
-porto = request.form["porto"].upper()
-
-container = int(request.form["container"])
-
-status = request.form["status"]
-
-data_finalizacao = None
-
-if status == "Finalizado":
-    data_finalizacao = datetime.now().strftime("%d/%m/%Y")
-
-conn = get_db()
-
-cursor = conn.cursor()
-
-cursor.execute("""
-INSERT INTO embarques (
-    etd,
-    eta,
-    exportador,
-    produto,
-    navio,
-    cia_maritima,
-    ref,
-    fatura,
-    porto,
-    container,
-    status,
-    data_finalizacao
-)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-""",
-(
-    etd,
-    eta,
-    exportador,
-    produto,
-    navio,
-    cia_maritima,
-    ref,
-    fatura,
-    porto,
-    container,
-    status,
-    data_finalizacao
-))
-
-conn.commit()
-
-cursor.close()
-conn.close()
-
-flash("Embarque cadastrado com sucesso!")
-
-return redirect(url_for("todos_embarques"))
- 
-# =====================================
-
-# EMBARQUES ATIVOS
-
-# =====================================
-
-@app.route("/todos_embarques")
-@login_required
-def todos_embarques():
-
- 
-conn = get_db()
-
-cursor = conn.cursor()
-
-cursor.execute("""
-SELECT *
-FROM embarques
-WHERE status <> 'Finalizado'
-ORDER BY eta ASC
-""")
-
-dados = cursor.fetchall()
-
-cursor.close()
-conn.close()
-
-embarques = []
-total_containers = 0
-
-for e in dados:
-
-    embarques.append({
-
-        "id": e["id"],
-
-        "etd": formatar_data(e["etd"]),
-        "eta": formatar_data(e["eta"]),
-
-        "navio": e["navio"],
-        "ref": e["ref"],
-
-        "exportador": e["exportador"],
-        "fatura": e["fatura"],
-
-        "produto": e["produto"],
-        "porto": e["porto"],
-
-        "container": e["container"],
-
-        "status": e["status"]
-
-    })
-
-    total_containers += e["container"]
-
-return render_template(
-    "todos_embarques.html",
-    embarques=embarques,
-    total_containers=total_containers,
-    perfil=session.get("perfil"),
-    usuario=session.get("usuario")
-)
- 
-
-# =====================================
-
-# HISTÓRICO
-
-# =====================================
-
-@app.route("/historico")
-@login_required
-def historico():
-
- 
-conn = get_db()
-
-cursor = conn.cursor()
-
-cursor.execute("""
-SELECT *
-FROM embarques
-WHERE status = 'Finalizado'
-ORDER BY id DESC
-""")
-
-dados = cursor.fetchall()
-
-cursor.close()
-conn.close()
-
-embarques = []
-
-for e in dados:
-
-    embarques.append({
-
-        "id": e["id"],
-
-        "etd": formatar_data(e["etd"]),
-        "eta": formatar_data(e["eta"]),
-
-        "navio": e["navio"],
-        "ref": e["ref"],
-
-        "exportador": e["exportador"],
-        "fatura": e["fatura"],
-
-        "produto": e["produto"],
-        "porto": e["porto"],
-
-        "container": e["container"],
-
-        "status": e["status"],
-
-        "data_finalizacao": e["data_finalizacao"]
-
-    })
-
-return render_template(
-    "historico.html",
-    embarques=embarques,
-    perfil=session.get("perfil"),
-    usuario=session.get("usuario")
-)
- 
-# =====================================
-
-# ALTERAR STATUS
-
-# =====================================
-
-@app.route("/alterar_status/[int:id](int:id)", methods=["POST"])
-@login_required
-@admin_required
-def alterar_status(id):
-
- 
-novo_status = request.form["status"]
-
-data_finalizacao = None
-
-if novo_status == "Finalizado":
-    data_finalizacao = datetime.now().strftime("%d/%m/%Y")
-
-conn = get_db()
-
-cursor = conn.cursor()
-
-cursor.execute("""
-UPDATE embarques
-SET
-    status=%s,
-    data_finalizacao=%s
-WHERE id=%s
-""",
-(
-    novo_status,
-    data_finalizacao,
-    id
-))
-
-conn.commit()
-
-cursor.close()
-conn.close()
-
-return redirect(url_for("todos_embarques"))
- 
-
-# =====================================
-
-# EDITAR EMBARQUE
-
-# =====================================
-
-@app.route("/editar/[int:id](int:id)", methods=["GET", "POST"])
-@login_required
-@admin_required
-def editar(id):
-
- 
-if request.method == "POST":
 
     etd = request.form["etd"]
     eta = request.form["eta"]
@@ -494,73 +207,319 @@ if request.method == "POST":
 
     container = int(request.form["container"])
 
-    conn = get_db()
+    status = request.form["status"]
 
-    cursor = conn.cursor()
+    data_finalizacao = None
 
-    cursor.execute("""
-    UPDATE embarques
-    SET
-        etd=%s,
-        eta=%s,
-        exportador=%s,
-        produto=%s,
-        navio=%s,
-        cia_maritima=%s,
-        ref=%s,
-        fatura=%s,
-        porto=%s,
-        container=%s
-    WHERE id=%s
-    """,
-    (
-        etd,
-        eta,
-        exportador,
-        produto,
-        navio,
-        cia_maritima,
-        ref,
-        fatura,
-        porto,
-        container,
-        id
-    ))
+    if status == "Finalizado":
 
-    conn.commit()
+        data_finalizacao = datetime.now().strftime("%d/%m/%Y")
 
-    cursor.close()
-    conn.close()
+    with sqlite3.connect("embarques.db") as conn:
 
-    flash("Embarque atualizado com sucesso!")
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        INSERT INTO embarques (
+            etd,
+            eta,
+            exportador,
+            produto,
+            navio,
+            cia_maritima,
+            ref,
+            fatura,
+            porto,
+            container,
+            status,
+            data_finalizacao
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            etd,
+            eta,
+            exportador,
+            produto,
+            navio,
+            cia_maritima,
+            ref,
+            fatura,
+            porto,
+            container,
+            status,
+            data_finalizacao
+        ))
+
+        conn.commit()
+
+    flash("Embarque cadastrado com sucesso!")
 
     return redirect(url_for("todos_embarques"))
-
-conn = get_db()
-
-cursor = conn.cursor()
-
-cursor.execute(
-    "SELECT * FROM embarques WHERE id=%s",
-    (id,)
-)
-
-embarque = cursor.fetchone()
-
-cursor.close()
-conn.close()
-
-return render_template(
-    "editar.html",
-    embarque=embarque,
-    perfil=session.get("perfil"),
-    usuario=session.get("usuario")
-)
- 
+# =====================================
+# EMBARQUES ATIVOS
 # =====================================
 
-# EXPORTAR EXCEL
+@app.route("/todos_embarques")
+@login_required
+def todos_embarques():
 
+    with sqlite3.connect("embarques.db") as conn:
+
+        conn.row_factory = sqlite3.Row
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT *
+        FROM embarques
+        WHERE status <> 'Finalizado'
+        ORDER BY eta ASC
+        """)
+
+        dados = cursor.fetchall()
+
+    embarques = []
+
+    total_containers = 0
+
+    for e in dados:
+
+        embarques.append({
+
+            "id": e["id"],
+
+            "etd": formatar_data(e["etd"]),
+            "eta": formatar_data(e["eta"]),
+
+            "exportador": e["exportador"],
+            "produto": e["produto"],
+
+            "navio": e["navio"],
+            "cia_maritima": e["cia_maritima"],
+
+            "ref": e["ref"],
+            "fatura": e["fatura"],
+
+            "porto": e["porto"],
+
+            "container": e["container"],
+
+            "status": e["status"]
+
+        })
+
+        total_containers += e["container"]
+
+    return render_template(
+        "todos_embarques.html",
+        embarques=embarques,
+        total_containers=total_containers,
+        perfil=session.get("perfil"),
+        usuario=session.get("usuario")
+    )
+
+
+# =====================================
+# HISTÓRICO
+# =====================================
+
+@app.route("/historico")
+@login_required
+def historico():
+
+    with sqlite3.connect("embarques.db") as conn:
+
+        conn.row_factory = sqlite3.Row
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT *
+        FROM embarques
+        WHERE status = 'Finalizado'
+        ORDER BY id DESC
+        """)
+
+        dados = cursor.fetchall()
+
+    embarques = []
+
+    for e in dados:
+
+        embarques.append({
+
+            "id": e["id"],
+
+            "etd": formatar_data(e["etd"]),
+            "eta": formatar_data(e["eta"]),
+
+            "exportador": e["exportador"],
+            "produto": e["produto"],
+
+            "navio": e["navio"],
+
+            "ref": e["ref"],
+            "fatura": e["fatura"],
+
+            "porto": e["porto"],
+
+            "container": e["container"],
+
+            "status": e["status"],
+
+            "data_finalizacao": e["data_finalizacao"]
+
+        })
+
+    return render_template(
+        "historico.html",
+        embarques=embarques,
+        perfil=session.get("perfil"),
+        usuario=session.get("usuario")
+    )
+
+
+# =====================================
+# ALTERAR STATUS
+# =====================================
+
+@app.route("/alterar_status/<int:id>", methods=["POST"])
+@login_required
+@admin_required
+def alterar_status(id):
+
+    novo_status = request.form["status"]
+
+    data_finalizacao = None
+
+    if novo_status == "Finalizado":
+
+        data_finalizacao = datetime.now().strftime("%d/%m/%Y")
+
+    with sqlite3.connect("embarques.db") as conn:
+
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        UPDATE embarques
+        SET
+            status=?,
+            data_finalizacao=?
+        WHERE id=?
+        """,
+        (
+            novo_status,
+            data_finalizacao,
+            id
+        ))
+
+        conn.commit()
+
+    return redirect(url_for("todos_embarques"))
+# =====================================
+# EDITAR EMBARQUE
+# =====================================
+
+@app.route("/editar/<int:id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def editar(id):
+
+    if request.method == "POST":
+
+        etd = request.form["etd"]
+        eta = request.form["eta"]
+
+        exportador = request.form["exportador"].upper()
+        produto = request.form["produto"].upper()
+
+        navio = request.form["navio"].upper()
+        cia_maritima = request.form["cia_maritima"].upper()
+
+        ref = request.form["ref"].upper()
+        fatura = request.form["fatura"].upper()
+
+        porto = request.form["porto"].upper()
+
+        container = int(request.form["container"])
+
+        with sqlite3.connect("embarques.db") as conn:
+
+            cursor = conn.cursor()
+
+            cursor.execute("""
+            UPDATE embarques
+            SET
+                etd=?,
+                eta=?,
+                exportador=?,
+                produto=?,
+                navio=?,
+                cia_maritima=?,
+                ref=?,
+                fatura=?,
+                porto=?,
+                container=?
+            WHERE id=?
+            """,
+            (
+                etd,
+                eta,
+                exportador,
+                produto,
+                navio,
+                cia_maritima,
+                ref,
+                fatura,
+                porto,
+                container,
+                id
+            ))
+
+            conn.commit()
+
+        flash("Embarque atualizado com sucesso!")
+
+        return redirect(url_for("todos_embarques"))
+
+    with sqlite3.connect("embarques.db") as conn:
+
+        conn.row_factory = sqlite3.Row
+
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT * FROM embarques WHERE id=?",
+            (id,)
+        )
+
+        embarque = cursor.fetchone()
+
+    return render_template(
+        "editar.html",
+        embarque=embarque,
+        perfil=session.get("perfil"),
+        usuario=session.get("usuario")
+    )
+
+# =====================================
+# BACKUP BANCO
+# =====================================
+
+@app.route("/backup")
+@login_required
+@admin_required
+def backup():
+
+    return send_file(
+        "embarques.db",
+        as_attachment=True,
+        download_name="backup_embarques.db"
+    )
+
+# =====================================
+# EXPORTAR EXCEL
 # =====================================
 
 @app.route("/exportar_excel")
@@ -568,83 +527,61 @@ return render_template(
 @admin_required
 def exportar_excel():
 
- 
-wb = Workbook()
+    wb = Workbook()
+    ws = wb.active
 
-ws = wb.active
-
-ws.title = "Todos os Embarques"
-
-ws.append([
-    "ETD",
-    "ETA",
-    "NAVIO",
-    "REF",
-    "EXPORTADOR",
-    "FATURA",
-    "PRODUTO",
-    "PORTO",
-    "CONTAINER",
-    "STATUS",
-    "DATA_FINALIZACAO"
-])
-
-conn = get_db()
-
-cursor = conn.cursor()
-
-cursor.execute("""
-SELECT
-    etd,
-    eta,
-    navio,
-    ref,
-    exportador,
-    fatura,
-    produto,
-    porto,
-    container,
-    status,
-    data_finalizacao
-FROM embarques
-ORDER BY eta
-""")
-
-dados = cursor.fetchall()
-
-cursor.close()
-conn.close()
-
-for linha in dados:
+    ws.title = "Embarques"
 
     ws.append([
-        linha["etd"],
-        linha["eta"],
-        linha["navio"],
-        linha["ref"],
-        linha["exportador"],
-        linha["fatura"],
-        linha["produto"],
-        linha["porto"],
-        linha["container"],
-        linha["status"],
-        linha["data_finalizacao"]
+        "ETD",
+        "ETA",
+        "EXPORTADOR",
+        "PRODUTO",
+        "NAVIO",
+        "CIA MARITIMA",
+        "REF",
+        "FATURA",
+        "PORTO",
+        "CONTAINERS",
+        "STATUS"
     ])
 
-arquivo = "embarques.xlsx"
+    with sqlite3.connect("embarques.db") as conn:
 
-wb.save(arquivo)
+        cursor = conn.cursor()
 
-return send_file(
-    arquivo,
-    as_attachment=True
-)
- 
+        cursor.execute("""
+        SELECT
+            etd,
+            eta,
+            exportador,
+            produto,
+            navio,
+            cia_maritima,
+            ref,
+            fatura,
+            porto,
+            container,
+            status
+        FROM embarques
+        ORDER BY eta
+        """)
 
-# =====================================
+        dados = cursor.fetchall()
 
+        for linha in dados:
+            ws.append(linha)
+
+    arquivo = "embarques.xlsx"
+
+    wb.save(arquivo)
+
+    return send_file(
+        arquivo,
+        as_attachment=True
+    )
+    # =====================================
 # IMPORTAR EXCEL
-
 # =====================================
 
 @app.route("/importar_excel", methods=["GET", "POST"])
@@ -652,75 +589,67 @@ return send_file(
 @admin_required
 def importar_excel():
 
- 
-if request.method == "POST":
+    if request.method == "POST":
 
-    arquivo = request.files["arquivo"]
+        arquivo = request.files["arquivo"]
 
-    wb = load_workbook(arquivo)
+        wb = load_workbook(arquivo)
 
-    ws = wb.active
+        ws = wb.active
 
-    conn = get_db()
+        with sqlite3.connect("embarques.db") as conn:
 
-    cursor = conn.cursor()
+            cursor = conn.cursor()
 
-    for linha in ws.iter_rows(min_row=2, values_only=True):
+            for linha in ws.iter_rows(min_row=2, values_only=True):
 
-        cursor.execute("""
-        INSERT INTO embarques (
-            etd,
-            eta,
-            navio,
-            ref,
-            exportador,
-            fatura,
-            produto,
-            porto,
-            container,
-            status,
-            data_finalizacao
-        )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """,
-        (
-            linha[0],
-            linha[1],
-            linha[2],
-            linha[3],
-            linha[4],
-            linha[5],
-            linha[6],
-            linha[7],
-            linha[8],
-            linha[9],
-            linha[10]
-        ))
+                cursor.execute("""
+                INSERT INTO embarques (
+                    etd,
+                    eta,
+                    exportador,
+                    produto,
+                    navio,
+                    cia_maritima,
+                    ref,
+                    fatura,
+                    porto,
+                    container,
+                    status,
+                    data_finalizacao
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    linha[0],
+                    linha[1],
+                    linha[2],
+                    linha[3],
+                    linha[4],
+                    linha[5],
+                    linha[6],
+                    linha[7],
+                    linha[8],
+                    linha[9],
+                    linha[10],
+                    None
+                ))
 
-    conn.commit()
+            conn.commit()
 
-    cursor.close()
-    conn.close()
+        flash("Excel importado com sucesso!")
 
-    flash("Excel importado com sucesso!")
+        return redirect(url_for("todos_embarques"))
 
-    return redirect(url_for("todos_embarques"))
-
-return render_template("importar_excel.html")
- 
-
+    return render_template("importar_excel.html")
 # =====================================
-
 # EXECUTAR
-
 # =====================================
 
 if __name__ == "__main__":
 
-
-app.run(
-    host="0.0.0.0",
-    port=5000,
-    debug=True
-)
-
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
