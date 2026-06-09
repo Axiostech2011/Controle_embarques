@@ -6,7 +6,7 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from openpyxl import Workbook, load_workbook
 
-app = Flask(**name**)
+app = Flask(__name__)
 app.secret_key = "AxiosSecret2026"
 
 def get_db():
