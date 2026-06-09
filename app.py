@@ -332,6 +332,71 @@ def todos_embarques():
         perfil=session.get("perfil"),
         usuario=session.get("usuario")
     )
+# =====================================
+
+# HISTÓRICO
+
+# =====================================
+
+@app.route("/historico")
+@login_required
+def historico():
+
+```
+conn = get_db()
+
+cursor = conn.cursor()
+
+cursor.execute("""
+SELECT *
+FROM embarques
+WHERE status = 'Finalizado'
+ORDER BY id DESC
+""")
+
+dados = cursor.fetchall()
+
+cursor.close()
+conn.close()
+
+embarques = []
+
+for e in dados:
+
+    embarques.append({
+
+        "id": e["id"],
+
+        "etd": formatar_data(e["etd"]),
+        "eta": formatar_data(e["eta"]),
+
+        "navio": e["navio"],
+
+        "ref": e["ref"],
+
+        "exportador": e["exportador"],
+
+        "fatura": e["fatura"],
+
+        "produto": e["produto"],
+
+        "porto": e["porto"],
+
+        "container": e["container"],
+
+        "status": e["status"],
+
+        "data_finalizacao": e["data_finalizacao"]
+
+    })
+
+return render_template(
+    "historico.html",
+    embarques=embarques,
+    perfil=session.get("perfil"),
+    usuario=session.get("usuario")
+)
+```
 
 
 # =====================================
