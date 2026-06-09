@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 
 <head>
@@ -60,7 +61,16 @@ function pesquisarTabela(){
 </div>
 
 <div class="titulo">
+
+<img
+src="{{ url_for('static', filename='logo.png') }}"
+alt="Axios"
+class="logo-header">
+
+<div>
 HISTÓRICO DE EMBARQUES
+</div>
+
 </div>
 
 <div class="data">
@@ -110,15 +120,17 @@ Sair
 
 <tr>
 
-<th>Finalizado</th>
+<th>DATA FINALIZAÇÃO</th>
 <th>ETD</th>
 <th>ETA</th>
-<th>Exportador</th>
-<th>Produto</th>
-<th>Navio</th>
-<th>REF</th>
-<th>Porto</th>
-<th>Containers</th>
+<th>NAVIO</th>
+<th>REFERÊNCIA</th>
+<th>EXPORTADOR</th>
+<th>FATURA</th>
+<th>PRODUTO</th>
+<th>PORTO</th>
+<th>CONTAINER</th>
+<th>STATUS</th>
 
 </tr>
 
@@ -136,17 +148,21 @@ Sair
 
 <td>{{ embarque["eta"] }}</td>
 
-<td>{{ embarque["exportador"] }}</td>
-
-<td>{{ embarque["produto"] }}</td>
-
 <td>{{ embarque["navio"] }}</td>
 
 <td>{{ embarque["ref"] }}</td>
 
+<td>{{ embarque["exportador"] }}</td>
+
+<td>{{ embarque["fatura"] }}</td>
+
+<td>{{ embarque["produto"] }}</td>
+
 <td>{{ embarque["porto"] }}</td>
 
 <td>{{ embarque["container"] }}</td>
+
+<td>{{ embarque["status"] }}</td>
 
 </tr>
 
@@ -155,20 +171,6 @@ Sair
 </tbody>
 
 </table>
-
-</div>
-
-</div>
-
-<div class="card ferramentas">
-
-<h3>Ferramentas Úteis</h3>
-
-<div class="menu">
-
-<a
-
-</a>
 
 </div>
 
