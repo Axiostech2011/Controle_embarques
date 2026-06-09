@@ -6,181 +6,201 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from openpyxl import Workbook, load_workbook
 
-
-app = Flask(__name__)
+app = Flask(**name**)
 app.secret_key = "AxiosSecret2026"
+
 def get_db():
-    return psycopg2.connect(
-        os.environ["DATABASE_URL"],
-        cursor_factory=RealDictCursor
-    )
+return psycopg2.connect(
+os.environ["DATABASE_URL"],
+cursor_factory=RealDictCursor
+)
+
 # =====================================
-# USUÁRIOS 
+
+# USUÁRIOS
+
 # =====================================
 
 ADMIN_USUARIO = "Axios"
 ADMIN_SENHA = "AxiosSecret"
 
 USUARIOS_CONSULTA = {
-    "Whiteplas": "Axios2011",
-    "cliente2": "cliente123",
-    "cliente3": "cliente123",
-    "cliente4": "cliente123"
+"Whiteplas": "Axios2011",
+"cliente2": "cliente123",
+"cliente3": "cliente123",
+"cliente4": "cliente123"
 }
 
 # =====================================
+
 # BANCO DE DADOS
+
 # =====================================
 
 def init_db():
 
-    conn = get_db()
+ 
+conn = get_db()
+cursor = conn.cursor()
 
-    cursor = conn.cursor()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS embarques (
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS embarques (
+    id BIGSERIAL PRIMARY KEY,
 
-        id BIGSERIAL PRIMARY KEY,
+    etd TEXT NOT NULL,
+    eta TEXT NOT NULL,
 
-        etd TEXT NOT NULL,
-        eta TEXT NOT NULL,
+    exportador TEXT NOT NULL,
+    produto TEXT NOT NULL,
 
-        exportador TEXT NOT NULL,
-        produto TEXT NOT NULL,
+    navio TEXT NOT NULL,
+    cia_maritima TEXT NOT NULL,
 
-        navio TEXT NOT NULL,
-        cia_maritima TEXT NOT NULL,
+    ref TEXT NOT NULL,
+    fatura TEXT NOT NULL,
 
-        ref TEXT NOT NULL,
-        fatura TEXT NOT NULL,
+    porto TEXT NOT NULL,
 
-        porto TEXT NOT NULL,
+    container INTEGER NOT NULL,
 
-        container INTEGER NOT NULL,
+    status TEXT NOT NULL,
 
-        status TEXT NOT NULL,
+    data_finalizacao TEXT
+)
+""")
 
-        data_finalizacao TEXT
+conn.commit()
 
-    )
-    """)
-
-    conn.commit()
-
-    cursor.close()
-    conn.close()
+cursor.close()
+conn.close()
+ 
 
 init_db()
-
 # =====================================
+
 # LOGIN OBRIGATÓRIO
+
 # =====================================
 
 def login_required(f):
 
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
+ 
+@wraps(f)
+def decorated_function(*args, **kwargs):
 
-        if not session.get("logado"):
-            return redirect(url_for("login"))
+    if not session.get("logado"):
+        return redirect(url_for("login"))
 
-        return f(*args, **kwargs)
+    return f(*args, **kwargs)
 
-    return decorated_function
+return decorated_function
+ 
 
 # =====================================
+
 # SOMENTE ADMIN
+
 # =====================================
 
 def admin_required(f):
 
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
+ 
+@wraps(f)
+def decorated_function(*args, **kwargs):
 
-        if session.get("perfil") != "admin":
+    if session.get("perfil") != "admin":
 
-            flash("Acesso restrito.")
+        flash("Acesso restrito.")
 
-            return redirect(url_for("todos_embarques"))
+        return redirect(url_for("todos_embarques"))
 
-        return f(*args, **kwargs)
+    return f(*args, **kwargs)
 
-    return decorated_function
+return decorated_function
+ 
 
 # =====================================
+
 # FORMATAR DATA
+
 # =====================================
 
 def formatar_data(data):
 
-    try:
+ 
+try:
 
-        return datetime.strptime(
-            data,
-            "%Y-%m-%d"
-        ).strftime("%d/%m/%Y")
+    return datetime.strptime(
+        data,
+        "%Y-%m-%d"
+    ).strftime("%d/%m/%Y")
 
-    except:
+except:
 
-        return data
-    # =====================================
+    return data
+ 
+
+# =====================================
+
 # LOGIN
+
 # =====================================
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
-    if request.method == "POST":
+ 
+if request.method == "POST":
 
-        usuario = request.form["usuario"]
-        senha = request.form["senha"]
+    usuario = request.form["usuario"]
+    senha = request.form["senha"]
 
-        # ADMIN
+    if (
+        usuario == ADMIN_USUARIO and
+        senha == ADMIN_SENHA
+    ):
 
-        if (
-            usuario == ADMIN_USUARIO and
-            senha == ADMIN_SENHA
-        ):
+        session["logado"] = True
+        session["perfil"] = "admin"
+        session["usuario"] = usuario
 
-            session["logado"] = True
-            session["perfil"] = "admin"
-            session["usuario"] = usuario
+        return redirect(url_for("todos_embarques"))
 
-            return redirect(url_for("todos_embarques"))
+    elif (
+        usuario in USUARIOS_CONSULTA and
+        senha == USUARIOS_CONSULTA[usuario]
+    ):
 
-        # CLIENTES
+        session["logado"] = True
+        session["perfil"] = "consulta"
+        session["usuario"] = usuario
 
-        elif (
-            usuario in USUARIOS_CONSULTA and
-            senha == USUARIOS_CONSULTA[usuario]
-        ):
+        return redirect(url_for("todos_embarques"))
 
-            session["logado"] = True
-            session["perfil"] = "consulta"
-            session["usuario"] = usuario
+    flash("Usuário ou senha inválidos")
 
-            return redirect(url_for("todos_embarques"))
-
-        flash("Usuário ou senha inválidos")
-
-    return render_template("login.html")
-
+return render_template("login.html")
+ 
 
 # =====================================
+
 # LOGOUT
+
 # =====================================
 
 @app.route("/logout")
 def logout():
 
-    session.clear()
+ 
+session.clear()
 
-    return redirect(url_for("login"))
-
-
+return redirect(url_for("login"))
+ 
 # =====================================
+
 # PÁGINA INICIAL
+
 # =====================================
 
 @app.route("/")
@@ -188,11 +208,14 @@ def logout():
 @admin_required
 def index():
 
-    return render_template("index.html")
-
+ 
+return render_template("index.html")
+ 
 
 # =====================================
+
 # ADICIONAR EMBARQUE
+
 # =====================================
 
 @app.route("/adicionar", methods=["POST"])
@@ -200,7 +223,7 @@ def index():
 @admin_required
 def adicionar():
 
-
+ 
 etd = request.form["etd"]
 eta = request.form["eta"]
 
@@ -268,70 +291,72 @@ conn.close()
 flash("Embarque cadastrado com sucesso!")
 
 return redirect(url_for("todos_embarques"))
-
+ 
 # =====================================
+
 # EMBARQUES ATIVOS
+
 # =====================================
 
 @app.route("/todos_embarques")
 @login_required
 def todos_embarques():
 
-    conn = get_db()
+ 
+conn = get_db()
 
-    cursor = conn.cursor()
+cursor = conn.cursor()
 
-    cursor.execute("""
-    SELECT *
-    FROM embarques
-    WHERE status <> 'Finalizado'
-    ORDER BY eta ASC
-    """)
+cursor.execute("""
+SELECT *
+FROM embarques
+WHERE status <> 'Finalizado'
+ORDER BY eta ASC
+""")
 
-    dados = cursor.fetchall()
+dados = cursor.fetchall()
 
-    cursor.close()
-    conn.close()
+cursor.close()
+conn.close()
 
-    embarques = []
+embarques = []
+total_containers = 0
 
-    total_containers = 0
+for e in dados:
 
-    for e in dados:
+    embarques.append({
 
-        embarques.append({
+        "id": e["id"],
 
-            "id": e["id"],
+        "etd": formatar_data(e["etd"]),
+        "eta": formatar_data(e["eta"]),
 
-            "etd": formatar_data(e["etd"]),
-            "eta": formatar_data(e["eta"]),
+        "navio": e["navio"],
+        "ref": e["ref"],
 
-            "exportador": e["exportador"],
-            "produto": e["produto"],
+        "exportador": e["exportador"],
+        "fatura": e["fatura"],
 
-            "navio": e["navio"],
-            "cia_maritima": e["cia_maritima"],
+        "produto": e["produto"],
+        "porto": e["porto"],
 
-            "ref": e["ref"],
-            "fatura": e["fatura"],
+        "container": e["container"],
 
-            "porto": e["porto"],
+        "status": e["status"]
 
-            "container": e["container"],
+    })
 
-            "status": e["status"]
+    total_containers += e["container"]
 
-        })
+return render_template(
+    "todos_embarques.html",
+    embarques=embarques,
+    total_containers=total_containers,
+    perfil=session.get("perfil"),
+    usuario=session.get("usuario")
+)
+ 
 
-        total_containers += e["container"]
-
-    return render_template(
-        "todos_embarques.html",
-        embarques=embarques,
-        total_containers=total_containers,
-        perfil=session.get("perfil"),
-        usuario=session.get("usuario")
-    )
 # =====================================
 
 # HISTÓRICO
@@ -342,7 +367,7 @@ def todos_embarques():
 @login_required
 def historico():
 
-
+ 
 conn = get_db()
 
 cursor = conn.cursor()
@@ -371,15 +396,12 @@ for e in dados:
         "eta": formatar_data(e["eta"]),
 
         "navio": e["navio"],
-
         "ref": e["ref"],
 
         "exportador": e["exportador"],
-
         "fatura": e["fatura"],
 
         "produto": e["produto"],
-
         "porto": e["porto"],
 
         "container": e["container"],
@@ -396,24 +418,80 @@ return render_template(
     perfil=session.get("perfil"),
     usuario=session.get("usuario")
 )
-
-
-
+ 
 # =====================================
+
 # ALTERAR STATUS
+
 # =====================================
-@app.route("/alterar_status/<int:id>", methods=["POST"])
+
+@app.route("/alterar_status/[int:id](int:id)", methods=["POST"])
 @login_required
 @admin_required
 def alterar_status(id):
 
-    novo_status = request.form["status"]
+ 
+novo_status = request.form["status"]
 
-    data_finalizacao = None
+data_finalizacao = None
 
-    if novo_status == "Finalizado":
+if novo_status == "Finalizado":
+    data_finalizacao = datetime.now().strftime("%d/%m/%Y")
 
-        data_finalizacao = datetime.now().strftime("%d/%m/%Y")
+conn = get_db()
+
+cursor = conn.cursor()
+
+cursor.execute("""
+UPDATE embarques
+SET
+    status=%s,
+    data_finalizacao=%s
+WHERE id=%s
+""",
+(
+    novo_status,
+    data_finalizacao,
+    id
+))
+
+conn.commit()
+
+cursor.close()
+conn.close()
+
+return redirect(url_for("todos_embarques"))
+ 
+
+# =====================================
+
+# EDITAR EMBARQUE
+
+# =====================================
+
+@app.route("/editar/[int:id](int:id)", methods=["GET", "POST"])
+@login_required
+@admin_required
+def editar(id):
+
+ 
+if request.method == "POST":
+
+    etd = request.form["etd"]
+    eta = request.form["eta"]
+
+    exportador = request.form["exportador"].upper()
+    produto = request.form["produto"].upper()
+
+    navio = request.form["navio"].upper()
+    cia_maritima = request.form["cia_maritima"].upper()
+
+    ref = request.form["ref"].upper()
+    fatura = request.form["fatura"].upper()
+
+    porto = request.form["porto"].upper()
+
+    container = int(request.form["container"])
 
     conn = get_db()
 
@@ -422,13 +500,29 @@ def alterar_status(id):
     cursor.execute("""
     UPDATE embarques
     SET
-        status=%s,
-        data_finalizacao=%s
+        etd=%s,
+        eta=%s,
+        exportador=%s,
+        produto=%s,
+        navio=%s,
+        cia_maritima=%s,
+        ref=%s,
+        fatura=%s,
+        porto=%s,
+        container=%s
     WHERE id=%s
     """,
     (
-        novo_status,
-        data_finalizacao,
+        etd,
+        eta,
+        exportador,
+        produto,
+        navio,
+        cia_maritima,
+        ref,
+        fatura,
+        porto,
+        container,
         id
     ))
 
@@ -437,104 +531,35 @@ def alterar_status(id):
     cursor.close()
     conn.close()
 
+    flash("Embarque atualizado com sucesso!")
+
     return redirect(url_for("todos_embarques"))
-# =====================================
-# EDITAR EMBARQUE
-# =====================================
-@app.route("/editar/<int:id>", methods=["GET", "POST"])
-@login_required
-@admin_required
-def editar(id):
 
-    if request.method == "POST":
+conn = get_db()
 
-        etd = request.form["etd"]
-        eta = request.form["eta"]
+cursor = conn.cursor()
 
-        exportador = request.form["exportador"].upper()
-        produto = request.form["produto"].upper()
+cursor.execute(
+    "SELECT * FROM embarques WHERE id=%s",
+    (id,)
+)
 
-        navio = request.form["navio"].upper()
-        cia_maritima = request.form["cia_maritima"].upper()
+embarque = cursor.fetchone()
 
-        ref = request.form["ref"].upper()
-        fatura = request.form["fatura"].upper()
+cursor.close()
+conn.close()
 
-        porto = request.form["porto"].upper()
-
-        container = int(request.form["container"])
-
-        conn = get_db()
-
-        cursor = conn.cursor()
-
-        cursor.execute("""
-        UPDATE embarques
-        SET
-            etd=%s,
-            eta=%s,
-            exportador=%s,
-            produto=%s,
-            navio=%s,
-            cia_maritima=%s,
-            ref=%s,
-            fatura=%s,
-            porto=%s,
-            container=%s
-        WHERE id=%s
-        """,
-        (
-            etd,
-            eta,
-            exportador,
-            produto,
-            navio,
-            cia_maritima,
-            ref,
-            fatura,
-            porto,
-            container,
-            id
-        ))
-
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
-        flash("Embarque atualizado com sucesso!")
-
-        return redirect(url_for("todos_embarques"))
-
-    conn = get_db()
-
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT * FROM embarques WHERE id=%s",
-        (id,)
-    )
-
-    embarque = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    return render_template(
-        "editar.html",
-        embarque=embarque,
-        perfil=session.get("perfil"),
-        usuario=session.get("usuario")
-    )
-
-# =====================================
-# BACKUP BANCO
+return render_template(
+    "editar.html",
+    embarque=embarque,
+    perfil=session.get("perfil"),
+    usuario=session.get("usuario")
+)
+ 
 # =====================================
 
-
-
-# =====================================
 # EXPORTAR EXCEL
+
 # =====================================
 
 @app.route("/exportar_excel")
@@ -542,42 +567,44 @@ def editar(id):
 @admin_required
 def exportar_excel():
 
-    wb = Workbook()
-    ws = wb.active
+ 
+wb = Workbook()
 
-    ws.title = "Embarques"
+ws = wb.active
 
-    ws.append([
-        "ETD",
-        "ETA",
-        "EXPORTADOR",
-        "PRODUTO",
-        "NAVIO",
-        "CIA MARITIMA",
-        "REF",
-        "FATURA",
-        "PORTO",
-        "CONTAINERS",
-        "STATUS"
-    ])
+ws.title = "Todos os Embarques"
 
-   conn = get_db()
+ws.append([
+    "ETD",
+    "ETA",
+    "NAVIO",
+    "REF",
+    "EXPORTADOR",
+    "FATURA",
+    "PRODUTO",
+    "PORTO",
+    "CONTAINER",
+    "STATUS",
+    "DATA_FINALIZACAO"
+])
+
+conn = get_db()
 
 cursor = conn.cursor()
 
 cursor.execute("""
 SELECT
-etd,
-eta,
-exportador,
-produto,
-navio,
-cia_maritima,
-ref,
-fatura,
-porto,
-container,
-status
+    etd,
+    eta,
+    navio,
+    ref,
+    exportador,
+    fatura,
+    produto,
+    porto,
+    container,
+    status,
+    data_finalizacao
 FROM embarques
 ORDER BY eta
 """)
@@ -587,20 +614,36 @@ dados = cursor.fetchall()
 cursor.close()
 conn.close()
 
+for linha in dados:
 
-        for linha in dados:
-            ws.append(linha)
+    ws.append([
+        linha["etd"],
+        linha["eta"],
+        linha["navio"],
+        linha["ref"],
+        linha["exportador"],
+        linha["fatura"],
+        linha["produto"],
+        linha["porto"],
+        linha["container"],
+        linha["status"],
+        linha["data_finalizacao"]
+    ])
 
-    arquivo = "embarques.xlsx"
+arquivo = "embarques.xlsx"
 
-    wb.save(arquivo)
+wb.save(arquivo)
 
-    return send_file(
-        arquivo,
-        as_attachment=True
-    )
-    # =====================================
+return send_file(
+    arquivo,
+    as_attachment=True
+)
+ 
+
+# =====================================
+
 # IMPORTAR EXCEL
+
 # =====================================
 
 @app.route("/importar_excel", methods=["GET", "POST"])
@@ -608,65 +651,75 @@ conn.close()
 @admin_required
 def importar_excel():
 
- conn = get_db()
+ 
+if request.method == "POST":
 
-cursor = conn.cursor()
+    arquivo = request.files["arquivo"]
 
-for linha in ws.iter_rows(min_row=2, values_only=True):
+    wb = load_workbook(arquivo)
 
-```
-cursor.execute("""
-INSERT INTO embarques (
-    etd,
-    eta,
-    exportador,
-    produto,
-    navio,
-    cia_maritima,
-    ref,
-    fatura,
-    porto,
-    container,
-    status,
-    data_finalizacao
-)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-""",
-(
-    linha[0],
-    linha[1],
-    linha[2],
-    linha[3],
-    linha[4],
-    linha[5],
-    linha[6],
-    linha[7],
-    linha[8],
-    linha[9],
-    linha[10],
-    None
-))
+    ws = wb.active
 
+    conn = get_db()
 
-conn.commit()
+    cursor = conn.cursor()
 
-cursor.close()
-conn.close()
+    for linha in ws.iter_rows(min_row=2, values_only=True):
 
+        cursor.execute("""
+        INSERT INTO embarques (
+            etd,
+            eta,
+            navio,
+            ref,
+            exportador,
+            fatura,
+            produto,
+            porto,
+            container,
+            status,
+            data_finalizacao
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            linha[0],
+            linha[1],
+            linha[2],
+            linha[3],
+            linha[4],
+            linha[5],
+            linha[6],
+            linha[7],
+            linha[8],
+            linha[9],
+            linha[10]
+        ))
 
-        flash("Excel importado com sucesso!")
+    conn.commit()
 
-        return redirect(url_for("todos_embarques"))
+    cursor.close()
+    conn.close()
 
-    return render_template("importar_excel.html")
+    flash("Excel importado com sucesso!")
+
+    return redirect(url_for("todos_embarques"))
+
+return render_template("importar_excel.html")
+ 
+
 # =====================================
+
 # EXECUTAR
+
 # =====================================
 
 if __name__ == "__main__":
 
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True
-    )
+
+app.run(
+    host="0.0.0.0",
+    port=5000,
+    debug=True
+)
+
