@@ -570,28 +570,32 @@ def exportar_excel():
         "STATUS"
     ])
 
-    with sqlite3.connect("embarques.db") as conn:
+   conn = get_db()
 
-        cursor = conn.cursor()
+cursor = conn.cursor()
 
-        cursor.execute("""
-        SELECT
-            etd,
-            eta,
-            exportador,
-            produto,
-            navio,
-            cia_maritima,
-            ref,
-            fatura,
-            porto,
-            container,
-            status
-        FROM embarques
-        ORDER BY eta
-        """)
+cursor.execute("""
+SELECT
+etd,
+eta,
+exportador,
+produto,
+navio,
+cia_maritima,
+ref,
+fatura,
+porto,
+container,
+status
+FROM embarques
+ORDER BY eta
+""")
 
-        dados = cursor.fetchall()
+dados = cursor.fetchall()
+
+cursor.close()
+conn.close()
+
 
         for linha in dados:
             ws.append(linha)
