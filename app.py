@@ -531,16 +531,7 @@ def editar(id):
 # BACKUP BANCO
 # =====================================
 
-@app.route("/backup")
-@login_required
-@admin_required
-def backup():
 
-    return send_file(
-        "embarques.db",
-        as_attachment=True,
-        download_name="backup_embarques.db"
-    )
 
 # =====================================
 # EXPORTAR EXCEL
@@ -617,53 +608,51 @@ conn.close()
 @admin_required
 def importar_excel():
 
-    if request.method == "POST":
+ conn = get_db()
 
-        arquivo = request.files["arquivo"]
+cursor = conn.cursor()
 
-        wb = load_workbook(arquivo)
+for linha in ws.iter_rows(min_row=2, values_only=True):
 
-        ws = wb.active
+```
+cursor.execute("""
+INSERT INTO embarques (
+    etd,
+    eta,
+    exportador,
+    produto,
+    navio,
+    cia_maritima,
+    ref,
+    fatura,
+    porto,
+    container,
+    status,
+    data_finalizacao
+)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+""",
+(
+    linha[0],
+    linha[1],
+    linha[2],
+    linha[3],
+    linha[4],
+    linha[5],
+    linha[6],
+    linha[7],
+    linha[8],
+    linha[9],
+    linha[10],
+    None
+))
 
-        with sqlite3.connect("embarques.db") as conn:
 
-            cursor = conn.cursor()
+conn.commit()
 
-            for linha in ws.iter_rows(min_row=2, values_only=True):
+cursor.close()
+conn.close()
 
-                cursor.execute("""
-                INSERT INTO embarques (
-                    etd,
-                    eta,
-                    exportador,
-                    produto,
-                    navio,
-                    cia_maritima,
-                    ref,
-                    fatura,
-                    porto,
-                    container,
-                    status,
-                    data_finalizacao
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    linha[0],
-                    linha[1],
-                    linha[2],
-                    linha[3],
-                    linha[4],
-                    linha[5],
-                    linha[6],
-                    linha[7],
-                    linha[8],
-                    linha[9],
-                    linha[10],
-                    None
-                ))
-
-            conn.commit()
 
         flash("Excel importado com sucesso!")
 
