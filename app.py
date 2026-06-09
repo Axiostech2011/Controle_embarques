@@ -15,6 +15,7 @@ os.environ["DATABASE_URL"],
 cursor_factory=RealDictCursor
 )
 
+
 # =====================================
 
 # USUÁRIOS
