@@ -200,7 +200,7 @@ def index():
 @admin_required
 def adicionar():
 
-```
+
 etd = request.form["etd"]
 eta = request.form["eta"]
 
@@ -342,7 +342,7 @@ def todos_embarques():
 @login_required
 def historico():
 
-```
+
 conn = get_db()
 
 cursor = conn.cursor()
@@ -396,7 +396,7 @@ return render_template(
     perfil=session.get("perfil"),
     usuario=session.get("usuario")
 )
-```
+
 
 
 # =====================================
