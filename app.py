@@ -15,7 +15,7 @@ def get_db():
         cursor_factory=RealDictCursor
     )
 # =====================================
-# USUÁRIOS
+# USUÁRIOS 
 # =====================================
 
 ADMIN_USUARIO = "Axios"
