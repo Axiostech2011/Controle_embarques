@@ -200,31 +200,31 @@ def index():
 @admin_required
 def adicionar():
 
-    etd = request.form["etd"]
-    eta = request.form["eta"]
+```
+etd = request.form["etd"]
+eta = request.form["eta"]
 
-    exportador = request.form["exportador"].upper()
-    produto = request.form["produto"].upper()
+exportador = request.form["exportador"].upper()
+produto = request.form["produto"].upper()
 
-    navio = request.form["navio"].upper()
-    cia_maritima = request.form["cia_maritima"].upper()
+navio = request.form["navio"].upper()
+cia_maritima = request.form["cia_maritima"].upper()
 
-    ref = request.form["ref"].upper()
-    fatura = request.form["fatura"].upper()
+ref = request.form["ref"].upper()
+fatura = request.form["fatura"].upper()
 
-    porto = request.form["porto"].upper()
+porto = request.form["porto"].upper()
 
-    container = int(request.form["container"])
+container = int(request.form["container"])
 
-    status = request.form["status"]
+status = request.form["status"]
 
-    data_finalizacao = None
+data_finalizacao = None
 
-    if status == "Finalizado":
+if status == "Finalizado":
+    data_finalizacao = datetime.now().strftime("%d/%m/%Y")
 
-        data_finalizacao = datetime.now().strftime("%d/%m/%Y")
-
-  conn = get_db()
+conn = get_db()
 
 cursor = conn.cursor()
 
@@ -265,9 +265,10 @@ conn.commit()
 cursor.close()
 conn.close()
 
-    flash("Embarque cadastrado com sucesso!")
+flash("Embarque cadastrado com sucesso!")
 
-    return redirect(url_for("todos_embarques"))
+return redirect(url_for("todos_embarques"))
+
 # =====================================
 # EMBARQUES ATIVOS
 # =====================================
