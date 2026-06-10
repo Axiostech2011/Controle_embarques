@@ -544,6 +544,7 @@ def exportar_excel():
         "PORTO",
         "CONTAINERS",
         "STATUS"
+         "DATA_FINALIZACAO"
     ])
 
     with sqlite3.connect("embarques.db") as conn:
@@ -562,7 +563,8 @@ def exportar_excel():
             fatura,
             porto,
             container,
-            status
+            status,
+            data_finalizacao
         FROM embarques
         ORDER BY eta
         """)
@@ -632,7 +634,7 @@ def importar_excel():
                     linha[8],
                     linha[9],
                     linha[10],
-                    None
+                    linha[11]
                 ))
 
             conn.commit()
@@ -642,6 +644,28 @@ def importar_excel():
         return redirect(url_for("todos_embarques"))
 
     return render_template("importar_excel.html")
+# =====================================
+# Excluir
+# =====================================
+@app.route("/excluir_historico/<int:id>")
+def excluir_historico(id):
+
+    if session.get("usuario") != "Axios":
+        return redirect(url_for("historico"))
+
+    conn = sqlite3.connect("embarques.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM embarques WHERE id = ?",
+        (id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("historico"))
+
 # =====================================
 # EXECUTAR
 # =====================================
