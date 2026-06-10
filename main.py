@@ -16,7 +16,7 @@ ADMIN_USUARIO = "Axios"
 ADMIN_SENHA = "AxiosSecret"
 
 USUARIOS_CONSULTA = {
-    "Whiteplas": "Axios2011",
+    "Whiteplas": "Axios",
     "cliente2": "cliente123",
     "cliente3": "cliente123",
     "cliente4": "cliente123"
